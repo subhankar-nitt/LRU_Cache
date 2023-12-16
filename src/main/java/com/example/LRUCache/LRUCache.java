@@ -1,30 +1,25 @@
 package com.example.LRUCache;
 
+import java.util.HashMap;
+
 import com.example.LRUCache.Node.Node;
 
 public class LRUCache {
 	private int capacity;
 	private Node head;
 	private Node tail;
+	HashMap<Integer,Node>map=new HashMap<>();
 	
 	public LRUCache(int capacity) {
 		this.capacity=capacity;
-		Node head = new Node(-1,-1);
-		Node tail = new Node(-1,-1);
-		
-		head.next=tail;
-		head.prev=null;
-		
-		tail.prev=head;
-		tail.next=null;
-		
-		this.head=head;
-		this.tail=tail;
+		head = null;
+		tail = null;
 	}
 	
 	public int get(int key) {
 		Node res = scanList(key);
 		if(res==null) {
+			
 			return -1;
 		}else {
 			updateKey(res,res.val);
@@ -38,67 +33,65 @@ public class LRUCache {
 		}else{
 			if(capacity!=0) {
 				Node node = new Node(key,value);
-				Node temp = head.next;
-				head.next=node;
-				node.prev=head;
-				temp.prev=node;
-				node.next=temp;
+				if (head==null) {
+					head=node;
+					tail=head;
+				}else {
+					Node prevHead=head;
+					node.next=prevHead;
+					prevHead.prev=node;
+					head=node;
+				}
+				map.put(key, node);
 				capacity--;
 			}else {
 				Node node = new Node(key,value);
-				Node prevNode = tail.prev.prev;
-				if(prevNode == head) {
-					tail.prev.key=key;
-					tail.prev.val=value;
+				map.put(key, node);
+                map.remove(tail.key);
+				if(head==tail) {
+					head=node;
+					tail=head;
 					return;
 				}
-				Node headNext = head.next;
+				Node prevHead= head;
+				node.next=prevHead;
+				prevHead.prev=node;
+				head=node;
+				tail=tail.prev;
+				tail.next=null;
 				
-				head.next=node;
-				node.prev=head;
-				
-				node.next=headNext;
-				headNext.prev=node;
-				
-				prevNode.next=tail;
-				tail.prev=prevNode;
 			}
 		}
-	}
-	
-	public void printList() {
-		
-		Node head=this.head;
-		while(head!=null) {
-			System.out.print(head.val+" ");
-			head=head.next;
-		}
-		System.out.println();
 	}
 	
 	public Node scanList(int key) {
-		Node head= this.head;
-		while(head!=null) {
-			if (head.key==key) {
-				return head;
-			}
-			head=head.next;
-		}
-		return null;
+		return map.get(key);
 	}
 	public void updateKey(Node scanRes,int value) {
 		scanRes.val=value;
 		Node scanNext=scanRes.next;
 		Node scanPrev = scanRes.prev;
+	
+		if (scanPrev==null) {
+			return;
+		}else if(scanNext==null) {
+			scanRes.next=head;
+			head.prev=scanRes;
+			scanPrev.next=null;
+			scanRes.prev=null;
+			head=scanRes;
+			tail=scanPrev;
+		}else {
+			scanPrev.next=scanNext;
+			scanNext.prev=scanPrev;
+			
+			scanRes.next=head;
+			head.prev=scanRes;
+			scanRes.prev=null;
+			head=scanRes;
+			
+		}
 		
-		scanPrev.next=scanNext;
-		scanNext.prev=scanPrev;
-		Node temp = head.next;
-		head.next=scanRes;
-		scanRes.prev=head;
-		
-		scanRes.next=temp;
-		temp.prev=scanRes;	
 	}
 
 }
